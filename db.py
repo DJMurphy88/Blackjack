@@ -7,7 +7,7 @@ def load_money():
         reader = csv.reader(file)
         for row in reader:
             money.append(row)
-        return money
+        return money[0][0]
 
 def save_money(money):
     with open("money.csv", "w", newline="") as file:
