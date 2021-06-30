@@ -47,8 +47,8 @@ def card_gen(suit):
             rank = str(i + 1)
             value = i + 1
 
-        card.append(suit)
         card.append(rank)
+        card.append(suit)
         card.append(value)
         
         deck.append(card)
@@ -62,22 +62,91 @@ def draw_card(deck):
     deck.remove(card)
     return card
 
+def initial_draw(deck, player_hand, dealer_hand):
+    i = 1
+    while i < 2:
+        card = draw_card(deck)
+        player_hand.append(card)
+        card = draw_card(deck)
+        dealer_hand.append(card)
+
+
+def check_bet(money):
+    # check to see if user input is valid
+    while True:
+        try:
+            bet = float(input("Bet: "))
+        except ValueError:
+            print("must be valid decimal number. Please try again.")
+            continue
+        if bet > money:
+            print("Must be an amount less than " +str(money)+".")
+
+        elif bet < 5:
+            print("The minimum bet is 5. Please try again.")
+
+        elif bet > 1000:
+            print("The maximum bet is 1000. Please try again.")
+        else:
+            return bet
+
+def print_hand(hand):
+    i = 0
+    for row in hand:
+        print(hand[i][0]+ " of " +hand[i][1])
+        i += 1
+    print()
+
+def player_turn(hand, deck, score):
+
+    choice = input("Hit or stand? (hit/stand): ")
+
+    while choice.lower == "hit":
+        card = draw_card(deck)
+        hand.append(card)
+        score += card[2]
+        print_hand(hand)
+
+        choice = input("Hit or stand? (hit/stand): ")
+    return score
+
+
+def dealer_turn():
+    pass
+
 def main():
     display_title()
 
-    money = db.load_money()
+    money = int(db.load_money())
     deck = deck_gen()
-    choice = "y"
 
-    while choice.lower() == "y":
+    dealer_hand = []
+    player_hand = []
+
+    player_score = 0
+    dealer_score = 0
+
+    continue_game = "y"
+
+    while continue_game.lower() == "y":
         print("Money: " +str(money))
-        bet = input("bet: ")
-        card = draw_card(deck)
+        bet = check_bet(money)
+        
+        initial_draw(deck, player_hand, dealer_hand)
 
-        print(str(deck[0][1])+ " of " +str(deck[0][0]))
+        print("DEALER'S SHOW CARD")
+        print(dealer_hand[0][0]+ " of " +dealer_hand[0][1])
+        print()
+
+        print("YOUR CARDS")
+        print_hand(player_hand)
+
+        player_score = player_turn(player_hand, deck)
+        
+        print(player_score)
         
 
-        choice = input("Play again? (y/n): ")
+        continue_game = input("Play again? (y/n): ")
 
     print("Come back soon!")
     print("Bye!")
