@@ -57,19 +57,9 @@ def card_gen(suit):
     return deck
 
 def draw_card(deck):
-    
     card = random.choice(deck)
     deck.remove(card)
     return card
-
-def initial_draw(deck, player_hand, dealer_hand):
-    i = 1
-    while i < 2:
-        card = draw_card(deck)
-        player_hand.append(card)
-        card = draw_card(deck)
-        dealer_hand.append(card)
-
 
 def check_bet(money):
     # check to see if user input is valid
@@ -97,22 +87,33 @@ def print_hand(hand):
         i += 1
     print()
 
-def player_turn(hand, deck, score):
-
-    choice = input("Hit or stand? (hit/stand): ")
-
-    while choice.lower == "hit":
+def player_turn(hand, score, deck):
+    choice = input("Hit or stand? (hit/stand): ")    
+    while score > 0 or score < 21:
+        while choice == "hit":
+            print(score)
+            card = draw_card(deck)
+            hand.append(card)
+            score += card[2]
+            print_hand(hand)           
+            if score < 21:
+                choice = input("Hit or stand? (hit/stand): ")
+            else:
+                print("\nYou've gone bust")
+                score = 0
+                return score
+        return score
+    
+def dealer_turn(hand, score, deck):
+    while score > 0 or score < 17:
+        print(score)
         card = draw_card(deck)
         hand.append(card)
         score += card[2]
-        print_hand(hand)
-
-        choice = input("Hit or stand? (hit/stand): ")
+        if score > 21:
+            score = 0
+            return score
     return score
-
-
-def dealer_turn():
-    pass
 
 def main():
     display_title()
@@ -120,19 +121,24 @@ def main():
     money = int(db.load_money())
     deck = deck_gen()
 
-    dealer_hand = []
-    player_hand = []
-
-    player_score = 0
-    dealer_score = 0
-
     continue_game = "y"
-
+    
     while continue_game.lower() == "y":
+        dealer_hand = []
+        player_hand = []
         print("Money: " +str(money))
         bet = check_bet(money)
+        turn = "player"
+        game_end = 0
         
-        initial_draw(deck, player_hand, dealer_hand)
+        card = draw_card(deck)
+        player_hand.append(card)
+        card = draw_card(deck)
+        player_hand.append(card)
+        card = draw_card(deck)
+        dealer_hand.append(card)
+        card = draw_card(deck)
+        dealer_hand.append(card)
 
         print("DEALER'S SHOW CARD")
         print(dealer_hand[0][0]+ " of " +dealer_hand[0][1])
@@ -141,11 +147,40 @@ def main():
         print("YOUR CARDS")
         print_hand(player_hand)
 
-        player_score = player_turn(player_hand, deck)
-        
+        player_score = player_hand[0][2] + player_hand[1][2]
         print(player_score)
-        
 
+        dealer_score = dealer_hand[0][2] + dealer_hand[1][2]
+
+        while game_end == 0:
+            if turn == "player":
+                print("player's turn")
+                player_score = player_turn(player_hand, player_score, deck)
+                turn = "dealer"
+            
+            else:
+                print("dealer's turn")
+                dealer_score = dealer_turn(dealer_hand, dealer_score, deck)
+                print_hand(dealer_hand)
+                game_end = 1
+
+        if player_score == 0:
+            print("YOUR POINTS:\t\tbust")
+        else:
+            print("YOUR POINTS:\t\t" +str(player_score))
+
+        if dealer_score == 0:
+            print("DEALER'S POINTS:\tbust")
+        else:
+            print("DEALER'S POINTS:\t" +str(dealer_score))
+
+        if player_score > dealer_score:
+            print("You won")
+        elif player_score < dealer_score:
+            print("You lost")
+        else:
+            print("It's a draw")
+        
         continue_game = input("Play again? (y/n): ")
 
     print("Come back soon!")
