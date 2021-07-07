@@ -9,7 +9,6 @@ def display_title():
 def deck_gen():
     deck = []
     cards = 0
-    i = 0
     
     suit_list = ["Hearts", "Spades", "Diamonds", "Clubs"]
 
@@ -128,6 +127,7 @@ def main():
         player_hand = []
         print("Money: " +str(money))
         bet = check_bet(money)
+        money -= bet
         turn = "player"
         game_end = 0
         
@@ -175,12 +175,19 @@ def main():
             print("DEALER'S POINTS:\t" +str(dealer_score))
 
         if player_score > dealer_score:
-            print("You won")
+            money += (bet * 1.5)
+            print("You won")       
+
         elif player_score < dealer_score:
             print("You lost")
+            
         else:
+            money += bet
             print("It's a draw")
-        
+
+        db.save_money(money)
+        print("MONEY: " +str(round(money, 2)))
+        print()
         continue_game = input("Play again? (y/n): ")
 
     print("Come back soon!")
