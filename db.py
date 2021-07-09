@@ -1,15 +1,31 @@
-import csv
-from os import write
+import sys
+FILENAME = "money.txt"
 
-def load_money():
-    money = []
-    with open("money.csv", newline="") as file:
-        reader = csv.reader(file)
-        for row in reader:
-            money.append(row)
-        return money[0][0]
+def exit_program():
+    print("Terminating program.")
+    sys.exit()
 
 def save_money(money):
-    with open("money.csv", "w", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerows(money)
+    try:
+        with open(FILENAME, "w", newline="") as file:
+            file.write(str(money))
+    except OSError as e:
+        print(type(e), e)
+        exit_program()
+    except Exception as e:
+        print(type(e), e)
+        exit_program()
+
+def load_money():
+    try:
+        money = []
+        with open(FILENAME) as file:
+            money = file.read()
+        return money
+    except FileNotFoundError as e:
+        print("Could not find " + FILENAME + " file.")
+        exit_program()
+        return money
+    except Exception as e:
+        print(type(e), e)
+        exit_program()

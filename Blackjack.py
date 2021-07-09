@@ -60,16 +60,19 @@ def draw_card(deck):
     deck.remove(card)
     return card
 
+def ace_check(card):
+    pass
+
 def check_bet(money):
     # check to see if user input is valid
     while True:
         try:
-            bet = float(input("Bet: "))
+            bet = int(input("Bet: "))
         except ValueError:
             print("must be valid decimal number. Please try again.")
             continue
         if bet > money:
-            print("Must be an amount less than " +str(money)+".")
+            print("Must be an equal or less than " +str(money)+".")
 
         elif bet < 5:
             print("The minimum bet is 5. Please try again.")
@@ -78,6 +81,14 @@ def check_bet(money):
             print("The maximum bet is 1000. Please try again.")
         else:
             return bet
+
+def check_chips(money):
+    if money < 5:
+            print("You do not have enough chips")
+            choice = input("Would you like to buy more? (y/n): ")
+            if choice == "y":
+                money += int(input("How many chips? "))
+                db.save_money(money)
 
 def print_hand(hand):
     i = 0
@@ -90,7 +101,6 @@ def player_turn(hand, score, deck):
     choice = input("Hit or stand? (hit/stand): ")    
     while score > 0 or score < 21:
         while choice == "hit":
-            print(score)
             card = draw_card(deck)
             hand.append(card)
             score += card[2]
@@ -105,7 +115,6 @@ def player_turn(hand, score, deck):
     
 def dealer_turn(hand, score, deck):
     while score > 0 or score < 17:
-        print(score)
         card = draw_card(deck)
         hand.append(card)
         score += card[2]
@@ -121,6 +130,7 @@ def main():
     deck = deck_gen()
 
     continue_game = "y"
+    check_chips(money)
     
     while continue_game.lower() == "y":
         dealer_hand = []
@@ -128,6 +138,7 @@ def main():
         print("Money: " +str(money))
         bet = check_bet(money)
         money -= bet
+        db.save_money(money)
         turn = "player"
         game_end = 0
         
@@ -148,7 +159,6 @@ def main():
         print_hand(player_hand)
 
         player_score = player_hand[0][2] + player_hand[1][2]
-        print(player_score)
 
         dealer_score = dealer_hand[0][2] + dealer_hand[1][2]
 
@@ -185,9 +195,12 @@ def main():
             money += bet
             print("It's a draw")
 
-        db.save_money(money)
+        
         print("MONEY: " +str(round(money, 2)))
         print()
+
+        db.save_money(money)
+
         continue_game = input("Play again? (y/n): ")
 
     print("Come back soon!")
