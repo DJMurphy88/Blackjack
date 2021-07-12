@@ -3,8 +3,7 @@ import db
 
 def display_title():
     print("BLACKJACK!")
-    print("Blackjack payout is 3:2")
-    print()
+    print("Blackjack payout is 3:2\n")
 
 def deck_gen():
     deck = []
@@ -29,7 +28,7 @@ def card_gen(suit):
 
         if i == 0:
             rank = "Ace"
-            value = 1
+            value = 11
 
         elif i == 10:
             rank = "Jack"
@@ -55,19 +54,19 @@ def card_gen(suit):
         i += 1
     return deck
 
-def draw_card(deck):
+def draw_card(turn, deck):
     card = random.choice(deck)
+    if card[0] == "Ace":
+        if turn == "player":
+            card[2] = int(input("Ace equals 1 or 11?: "))
     deck.remove(card)
     return card
-
-def ace_check(card):
-    pass
 
 def check_bet(money):
     # check to see if user input is valid
     while True:
         try:
-            bet = int(input("Bet: "))
+            bet = float(input("Bet: "))
         except ValueError:
             print("must be valid decimal number. Please try again.")
             continue
@@ -82,40 +81,47 @@ def check_bet(money):
         else:
             return bet
 
-def check_chips(money):
-    if money < 5:
+def check_chips():
+    money = float(db.load_money())
+    while money < 5:
             print("You do not have enough chips")
             choice = input("Would you like to buy more? (y/n): ")
             if choice == "y":
-                money += int(input("How many chips? "))
-                db.save_money(money)
+                try:
+                    money += int(input("How many chips? "))
+                    db.save_money(money)
+                    print()
+                except ValueError:
+                    print("must be valid decimal number. Please try again.")
+    return money         
 
 def print_hand(hand):
     i = 0
     for row in hand:
-        print(hand[i][0]+ " of " +hand[i][1])
+        print(hand[i][0]+ " of " +hand[i][1] +"("+str(hand[i][2])+")")
         i += 1
-    print()
 
 def player_turn(hand, score, deck):
-    choice = input("Hit or stand? (hit/stand): ")    
-    while score > 0 or score < 21:
-        while choice == "hit":
-            card = draw_card(deck)
-            hand.append(card)
-            score += card[2]
-            print_hand(hand)           
-            if score < 21:
-                choice = input("Hit or stand? (hit/stand): ")
+    turn = "player"
+    while score > 0 and score < 21:
+            choice = input("\nHit or stand? (hit/stand): ")
+            print()
+            if choice == "hit":
+                card = draw_card(turn, deck)
+                hand.append(card)
+                score += card[2]
+                print_hand(hand)
             else:
-                print("\nYou've gone bust")
-                score = 0
                 return score
-        return score
+    if score > 21:
+        print("You've gone bust.\n")
+        score = 0
+    return score
     
 def dealer_turn(hand, score, deck):
+    turn = "dealer"
     while score > 0 or score < 17:
-        card = draw_card(deck)
+        card = draw_card(turn, deck)
         hand.append(card)
         score += card[2]
         if score > 21:
@@ -126,58 +132,65 @@ def dealer_turn(hand, score, deck):
 def main():
     display_title()
 
-    money = int(db.load_money())
+    money = check_chips()
     deck = deck_gen()
 
     continue_game = "y"
-    check_chips(money)
-    
+
     while continue_game.lower() == "y":
-        dealer_hand = []
         player_hand = []
+        dealer_hand = []
+        player_score = 0
+        dealer_score = 0
+        turn = "player"
+        game_end = 0
+
         print("Money: " +str(money))
         bet = check_bet(money)
         money -= bet
         db.save_money(money)
+
+        # Player initial hand 
+        card = draw_card(turn, deck)
+        player_hand.append(card)
+        card = draw_card(turn, deck)
+        player_hand.append(card)
+        turn = "dealer"
+
+        # Dealer initial hand
+        card = draw_card(turn, deck)
+        dealer_hand.append(card)
+        card = draw_card(turn, deck)
+        dealer_hand.append(card)
         turn = "player"
-        game_end = 0
-        
-        card = draw_card(deck)
-        player_hand.append(card)
-        card = draw_card(deck)
-        player_hand.append(card)
-        card = draw_card(deck)
-        dealer_hand.append(card)
-        card = draw_card(deck)
-        dealer_hand.append(card)
 
-        print("DEALER'S SHOW CARD")
+        print("\nDEALER'S SHOW CARD")
         print(dealer_hand[0][0]+ " of " +dealer_hand[0][1])
-        print()
 
-        print("YOUR CARDS")
+        print("\nYOUR CARDS")
         print_hand(player_hand)
 
         player_score = player_hand[0][2] + player_hand[1][2]
-
         dealer_score = dealer_hand[0][2] + dealer_hand[1][2]
 
         while game_end == 0:
             if turn == "player":
-                print("player's turn")
                 player_score = player_turn(player_hand, player_score, deck)
                 turn = "dealer"
             
             else:
-                print("dealer's turn")
-                dealer_score = dealer_turn(dealer_hand, dealer_score, deck)
-                print_hand(dealer_hand)
-                game_end = 1
+                if player_score == 0:
+                    print_hand(dealer_hand)
+                    game_end = 1
+                else:
+                    dealer_score = dealer_turn(dealer_hand, dealer_score, deck)
+                    print_hand(dealer_hand)
+                    game_end = 1
 
         if player_score == 0:
-            print("YOUR POINTS:\t\tbust")
+            print("\nYOUR POINTS:\t\tbust")
         else:
-            print("YOUR POINTS:\t\t" +str(player_score))
+            print("\nYOUR POINTS:\t\t" +str(player_score))
 
         if dealer_score == 0:
             print("DEALER'S POINTS:\tbust")
@@ -186,14 +199,14 @@ def main():
 
         if player_score > dealer_score:
             money += (bet * 1.5)
-            print("You won")       
+            print("\nYou won.")       
 
         elif player_score < dealer_score:
-            print("You lost")
+            print("\nSorry. You lose.")
             
         else:
             money += bet
-            print("It's a draw")
+            print("\nIt's a draw.")
 
         
         print("MONEY: " +str(round(money, 2)))

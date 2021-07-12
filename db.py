@@ -25,7 +25,6 @@ def load_money():
     except FileNotFoundError as e:
         print("Could not find " + FILENAME + " file.")
         exit_program()
-        return money
     except Exception as e:
         print(type(e), e)
         exit_program()
